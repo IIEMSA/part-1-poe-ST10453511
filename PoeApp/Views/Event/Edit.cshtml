@@ -1,0 +1,59 @@
+﻿@using Microsoft.AspNetCore.Mvc.TagHelpers
+@model PoeApp.Models.EventViewModel
+
+@{
+    ViewData["Title"] = "Edit";
+}
+
+<h1>Edit</h1>
+
+<h4>Event</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Edit" method="post">
+            <input type="hidden" asp-for="EventId" />
+
+            <div class="form-group">
+                <label asp-for="EventName"></label>
+                <input asp-for="EventName" class="form-control" />
+                <span asp-validation-for="EventName" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="EventDate"></label>
+                <input asp-for="EventDate" class="form-control" type="datetime-local"
+                       value="@Model.EventDate.ToString("yyyy-MM-ddTHH:mm")" />
+                <span asp-validation-for="EventDate" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Description"></label>
+                <textarea asp-for="Description" class="form-control"></textarea>
+                <span asp-validation-for="Description" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Venue.VenueId"></label>
+                <select asp-for="Venue.VenueId" class="form-control"
+                        asp-items="ViewBag.VenueList">
+                    <option value="">-- Select Venue --</option>
+                </select>
+                <span asp-validation-for="Venue.VenueId" class="text-danger"></span>
+            </div>
+
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary">Save</button>
+                <a asp-action="Index" class="btn btn-secondary">Back to List</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}
