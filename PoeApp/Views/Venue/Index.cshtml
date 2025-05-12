@@ -1,11 +1,10 @@
-﻿@using Microsoft.AspNetCore.Mvc.TagHelpers
-@model IEnumerable<PoeApp.Models.VenueViewModel>
+﻿@model IEnumerable<PoeApp.Models.Venue>
 
 @{
-    ViewData["Title"] = "Venue Information";
+    ViewData["Title"] = "Venue Info";
 }
 
-<h1>Index</h1>
+<h1>Venue Info</h1>
 
 <p>
     <a asp-action="Create">Create New</a>
@@ -29,26 +28,29 @@
         </tr>
     </thead>
     <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.VenueName)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Location)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Capacity)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.ImageUrl)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.VenueId">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.VenueId">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.VenueId">Delete</a>
-             </td>
-        </tr>
-}
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>
+                    @Html.DisplayFor(modelItem => item.VenueName)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Location)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.Capacity)
+                </td>
+                <td>
+                    @Html.DisplayFor(modelItem => item.ImageUrl)
+                </td>
+
+                <td>
+                    <a asp-action="Edit" asp-route-id="@item.VenueID">Edit</a> |
+                    <a asp-action="Details" asp-route-id="@item.VenueID">Details</a> |
+                    <a asp-action="Delete" asp-route-id="@item.VenueID">Delete</a>
+                </td>
+
+            </tr>
+        }
     </tbody>
 </table>

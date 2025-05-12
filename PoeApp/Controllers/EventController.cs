@@ -1,142 +1,113 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
+﻿using PoeApp.Models;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using PoeApp.DbContext;
-using PoeApp.Entities;
-using PoeApp.Factory;
-using PoeApp.Models;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace PoeApp.Controllers
 {
-	public class EventController : Controller
-	{
-		private readonly ApplicationDbContext _context;
+    public class EventController : Controller
+    {
+        private readonly ApplicationDbContext _context;
 
-		public EventController(ApplicationDbContext context)
-		{
-			_context = context;
-		}
+        public EventController(ApplicationDbContext context)
+        {
+            _context = context;
+        }
 
         public async Task<IActionResult> Index()
         {
-            var eventsEntityList = await _context.Event.ToListAsync();
-            List<EventViewModel> viewModelList = new List<EventViewModel>();
-            foreach (Event dbEvent in eventsEntityList)
-            {
-                viewModelList.Add(EventFactory.CreateViewModelEvent(dbEvent));
-            }
-
-            return View(viewModelList);
+            var events = await _context.Event.Include(e => e.Venue).ToListAsync();
+            return View(events);
         }
 
-        private async Task<List<VenueViewModel>> GetAllVenues()
+        public IActionResult Create()
         {
-            List<Venue> venueEntityList = await _context.Venue.ToListAsync();
-            List<VenueViewModel> viewModelList = new List<VenueViewModel>();
-            foreach (Venue dbVenue in venueEntityList)
-            {
-                viewModelList.Add(VenueFactory.CreateViewModelVenue(dbVenue));
-            }
-
-            return viewModelList;
-        }
-
-        public async Task<IActionResult> Create()
-        {
-            List<VenueViewModel> venueViewModelList = await GetAllVenues();
-            ViewBag.VenueList = new SelectList(venueViewModelList, nameof(VenueViewModel.VenueId),
-                nameof(VenueViewModel.VenueName));
-
+            ViewBag.Venue = _context.Venue.ToList();
             return View();
         }
 
         [HttpPost]
-		[ValidateAntiForgeryToken]
-		public async Task<IActionResult> Create(EventViewModel eventModel)
-		{
-			if (ModelState.IsValid)
-			{
-                Event eventEntity = EventFactory.CreateDatabaseEvent(eventModel);
-                _context.Add(eventEntity);
-				await _context.SaveChangesAsync();
-				return RedirectToAction(nameof(Index));
-			}
-			List<VenueViewModel> venueViewModelList = await GetAllVenues();
-            ViewBag.VenueList = new SelectList(venueViewModelList, nameof(VenueViewModel.VenueId),
-                nameof(VenueViewModel.VenueName));
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(Event events)
+        {
+            if (ModelState.IsValid)
+            {
+                _context.Add(events);
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(Index));
+            }
 
-            return View(eventModel);
-		}
+            ViewBag.Venue = _context.Venue.ToList();
+            return View(events);
+        }
 
-		public async Task<IActionResult> Details(int id)
-		{
-			var eventEntity = await _context.Event
-			                               .Include(e => e.Venue)
-			                               .FirstOrDefaultAsync(e => e.EventId == id);
-			if (eventEntity == null)
-			{
-				return NotFound();
-			}
+        public async Task<IActionResult> Details(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
 
-            var eventModel = EventFactory.CreateViewModelEvent(eventEntity);
-            return View(eventModel);
-		}
+            var events = await _context.Event.Include(e => e.Venue)
+                .FirstOrDefaultAsync(m => m.EventID == id);
+            if (events == null)
+            {
+                return NotFound();
+            }
 
-		public async Task<IActionResult> Delete(int id)
-		{
-			var eventEntity = await _context.Event
-			                               .Include(e => e.Venue)
-			                               .FirstOrDefaultAsync(e => e.EventId == id);
-			if (eventEntity == null)
-			{
-				return NotFound();
-			}
+            return View(events);
+        }
 
-            var eventModel = EventFactory.CreateViewModelEvent(eventEntity);
-            return View(eventModel);
-		}
+        public async Task<IActionResult> Delete(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
 
-		[HttpPost, ActionName("Delete")]
-		[ValidateAntiForgeryToken]
-		public async Task<IActionResult> DeleteConfirmed(int id)
-		{
-			var eventModel = await _context.Event.FindAsync(id);
-			_context.Event.Remove(eventModel);
-			await _context.SaveChangesAsync();
-			return RedirectToAction(nameof(Index));
-		}
+            var events = await _context.Event.Include(e => e.Venue)
+                .FirstOrDefaultAsync(m => m.EventID == id);
+            if (events == null)
+            {
+                return NotFound();
+            }
 
-		private bool EventExists(int id)
-		{
-			return _context.Event.Any(e => e.EventId == id);
-		}
+            return View(events);
+        }
 
-		public async Task<IActionResult> Edit(int id)
-		{
-			if (id == null)
-			{
-				return NotFound();
-			}
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConfirmed(int id)
+        {
+            var events = await _context.Event.FindAsync(id);
+            _context.Event.Remove(events);
+            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Index));
+        }
 
-			var eventEntity = await _context.Event.FindAsync(id);
-			if (eventEntity == null)
-			{
-				return NotFound();
-			}
+        public async Task<IActionResult> Edit(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
 
-            var eventModel = EventFactory.CreateViewModelEvent(eventEntity);
-            List<VenueViewModel> venueViewModelList = await GetAllVenues();
-            ViewBag.VenueList = new SelectList(venueViewModelList, nameof(VenueViewModel.VenueId),
-                nameof(VenueViewModel.VenueName));	
+            var events = await _context.Event.FindAsync(id);
+            if (events == null)
+            {
+                return NotFound();
+            }
 
-            return View(eventModel);
-		}
+            ViewData["VenueID"] = new Microsoft.AspNetCore.Mvc.Rendering.SelectList(await _context.Venue.ToListAsync(), "VenueID", "VenueName", events.VenueID);
+            return View(events);
+        }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, EventViewModel eventModel)
+        public async Task<IActionResult> Edit(int id, Event events)
         {
-            if (id != eventModel.EventId)
+            if (id != events.EventID)
             {
                 return NotFound();
             }
@@ -145,14 +116,12 @@ namespace PoeApp.Controllers
             {
                 try
                 {
-                    Event eventEntity = EventFactory.CreateDatabaseEvent(eventModel);
-                    _context.Update(eventEntity);
+                    _context.Update(events);
                     await _context.SaveChangesAsync();
-                    return RedirectToAction("Index"); // Explicit action name
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!EventExists(eventModel.EventId))
+                    if (!EventExists(events.EventID))
                     {
                         return NotFound();
                     }
@@ -161,16 +130,16 @@ namespace PoeApp.Controllers
                         throw;
                     }
                 }
+                return RedirectToAction(nameof(Index));
             }
 
-            // Reload venues if validation fails
-            List<VenueViewModel> venueViewModelList = await GetAllVenues();
-            ViewBag.VenueList = new SelectList(venueViewModelList,
-                nameof(VenueViewModel.VenueId),
-                nameof(VenueViewModel.VenueName),
-                eventModel.Venue?.VenueId);
+            ViewData["VenueID"] = new Microsoft.AspNetCore.Mvc.Rendering.SelectList(await _context.Venue.ToListAsync(), "VenueID", "VenueName", events.VenueID);
+            return View(events);
+        }
 
-            return View(eventModel);
+        private bool EventExists(int id)
+        {
+            return _context.Event.Any(e => e.EventID == id);
         }
     }
 }

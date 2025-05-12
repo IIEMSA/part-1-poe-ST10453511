@@ -1,140 +1,134 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using PoeApp.DbContext;
-using PoeApp.Entities;
-using PoeApp.Factory;
+﻿using System.Reflection;
 using PoeApp.Models;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace PoeApp.Controllers
 {
-	public class VenueController : Controller
-	{
-		private readonly ApplicationDbContext _context;
+    public class VenueController : Controller
+    {
+        private readonly ApplicationDbContext _context;
+        public VenueController(ApplicationDbContext context)
+        {
+            _context = context;
+        }
+        public async Task<IActionResult> Index()
+        {
+            var venue = await _context.Venue.ToListAsync();
+            return View(venue);
+        }
 
-		public VenueController(ApplicationDbContext context)
-		{
-			_context = context;
-		}
+        public IActionResult Create()
+        {
+            return View();
+        }
 
-		public async Task<IActionResult> Index()
-		{
-			var venue = await _context.Venue.ToListAsync();
+        [HttpPost]
+        public async Task<IActionResult> Create(Venue venue)
+        {
+            if (ModelState.IsValid)
+            {
+                _context.Add(venue);
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(Index));
+            }
+            return View(venue);
+        }
 
-			List<VenueViewModel> venueList = new List<VenueViewModel>();
-			foreach (Venue dbVenue in venue)
-			{
-				venueList.Add(VenueFactory.CreateViewModelVenue(dbVenue));
-			}
+        public async Task<IActionResult> Details(int? id)
+        {
+            var venue = await _context.Venue.FirstOrDefaultAsync(m => m.VenueID == id);
+            if (venue == null)
+            {
+                return NotFound();
+            }
+            return View(venue);
 
-			return View(venueList);
-		}
+        }
+        public async Task<IActionResult> Delete(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
 
-		public IActionResult Create()
-		{
-			return View();
-		}
+            var venue = await _context.Venue
+                .FirstOrDefaultAsync(m => m.VenueID == id);
+            if (venue == null)
+            {
+                return NotFound();
+            }
 
-		[HttpPost]
-		[ValidateAntiForgeryToken]
-		public async Task<IActionResult> Create(VenueViewModel viewModel)
-		{
-			if (ModelState.IsValid)
-			{
-				Venue venue = VenueFactory.CreateDatabaseVenue(viewModel);
-				_context.Add(venue);
-				await _context.SaveChangesAsync();
-				return RedirectToAction(nameof(Index));
-			}
+            return View(venue);
+        }
 
-			return View(viewModel);
-		}
+        // POST Action - Delete Venue by VenueID
+        [HttpPost, ActionName("Delete")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteConfirmed(int id)
+        {
+            var venue = await _context.Venue.FindAsync(id);
+            if (venue != null)
+            {
+                _context.Venue.Remove(venue);
+                await _context.SaveChangesAsync();
+            }
 
-		public async Task<IActionResult> Details(int? id)
-		{
-			if (id == null)
-				return NotFound();
+            return RedirectToAction(nameof(Index));
+        }
 
-			var venue = await _context.Venue
-			                          .FirstOrDefaultAsync(m => m.VenueId == id);
+        private bool VenueExists(int id)
+        {
+            return _context.Venue.Any(e => e.VenueID == id);
+        }
+        public async Task<IActionResult> Edit(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
 
-			if (venue == null)
-				return NotFound();
+            var venue = await _context.Venue.FirstOrDefaultAsync(m => m.VenueID == id); // Use `FirstOrDefaultAsync`
+            if (venue == null)
+            {
+                return NotFound();
+            }
 
-			VenueViewModel viewModel = VenueFactory.CreateViewModelVenue(venue);
-			return View(viewModel);
-		}
+            return View(venue);
+        }
 
-		public async Task<IActionResult> Edit(int? id)
-		{
-			if (id == null)
-				return NotFound();
+        [HttpPost]
+        public async Task<IActionResult> Edit(int id, Venue venue)
+        {
+            if (id != venue.VenueID)
+            {
+                return NotFound();
+            }
 
-			var venue = await _context.Venue.FindAsync(id);
-			if (venue == null)
-				return NotFound();
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    _context.Update(venue);
+                    await _context.SaveChangesAsync();
+                }
+                catch (DbUpdateConcurrencyException)
+                {
+                    if (!VenueExists(venue.VenueID))
+                    {
+                        return NotFound();
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
+                return RedirectToAction(nameof(Index)); // Should be outside the try-catch block
+            }
 
-			VenueViewModel viewModel = VenueFactory.CreateViewModelVenue(venue);
-			return View(viewModel);
-		}
+            return View(venue);
+        }
 
+    }
 
-		[HttpPost]
-		[ValidateAntiForgeryToken]
-		public async Task<IActionResult> Edit(VenueViewModel viewModel)
-		{
-			if (ModelState.IsValid)
-			{
-				Venue venue = VenueFactory.CreateDatabaseVenue(viewModel);
-				try
-				{
-					_context.Update(venue);
-					await _context.SaveChangesAsync();
-				}
-				catch (DbUpdateConcurrencyException)
-				{
-					if (!_context.Venue.Any(e => e.VenueId == venue.VenueId))
-						return NotFound();
-					else
-						throw;
-				}
-
-				return RedirectToAction(nameof(Index));
-			}
-
-			return View(viewModel);
-		}
-
-
-		public async Task<IActionResult> Delete(int? id)
-		{
-			if (id == null)
-			{
-				return NotFound();
-			}
-
-			var venue = await _context.Venue.FirstOrDefaultAsync(m => m.VenueId == id);
-
-			if (venue == null)
-			{
-				return NotFound();
-			}
-
-            VenueViewModel viewModel = VenueFactory.CreateViewModelVenue(venue);
-            return View(viewModel);
-		}
-
-		[HttpPost]
-		public async Task<IActionResult> Delete(int id)
-		{
-			var venue = await _context.Venue.FindAsync(id);
-			if (venue == null)
-			{
-				return NotFound();
-			}
-
-			_context.Venue.Remove(venue);
-			await _context.SaveChangesAsync();
-			return RedirectToAction(nameof(Index));
-		}
-	}
 }

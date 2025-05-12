@@ -1,5 +1,4 @@
-﻿@using Microsoft.AspNetCore.Mvc.TagHelpers
-@model PoeApp.Models.BookingViewModel
+﻿@model PoeApp.Models.Booking
 
 @{
     ViewData["Title"] = "Create";
@@ -13,14 +12,28 @@
     <div class="col-md-4">
         <form asp-action="Create">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="Event.EventId" class="control-label"></label>
-                <select asp-for="Event.EventId" class ="form-control" asp-items="ViewBag.EventList"></select>
+
+            <div class="="form-group">
+                <label asp-for="EventID" class="control-label"></label>
+                <select asp-for="EventID" class="form-control">
+                    <option value="">=-Select Event ID --</option>
+                    @foreach (var events in ViewBag.Event)
+                    {
+                        <option value="@events.EventID">@events.EventName</option>
+                    }
+                    </select>
             </div>
-            <div class="form-group">
-                <label asp-for="Venue.VenueId" class="control-label"></label>
-                <select asp-for="Venue.VenueId" class ="form-control" asp-items="ViewBag.VenueList"></select>
+            <div class="=" form-group">
+                <label asp-for="VenueID" class="control-label"></label>
+                <select asp-for="VenueID" class="form-control">
+                    <option value="">=-Select Venue ID --</option>
+                    @foreach (var venue in ViewBag.Venue)
+                    {
+                        <option value="@venue.VenueID">@venue.VenueName</option>
+                    }
+                </select>
             </div>
+
             <div class="form-group">
                 <label asp-for="BookingDate" class="control-label"></label>
                 <input asp-for="BookingDate" class="form-control" />

@@ -1,4 +1,4 @@
-namespace PoeApp.Models
+﻿namespace PoeApp.Models
 {
     public class ErrorViewModel
     {
