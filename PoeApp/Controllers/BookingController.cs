@@ -1,6 +1,7 @@
 ﻿using PoeApp.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace PoeApp.Controllers
 {
@@ -115,15 +116,14 @@ namespace PoeApp.Controllers
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
-            {
                 return NotFound();
-            }
 
-            var booking = await _context.Booking.FirstOrDefaultAsync(m => m.BookingID == id);
+            var booking = await _context.Booking.FindAsync(id);
             if (booking == null)
-            {
                 return NotFound();
-            }
+
+            ViewBag.EventID = new SelectList(_context.Event.ToList(), "EventID", "EventName", booking.EventID);
+            ViewBag.VenueID = new SelectList(_context.Venue.ToList(), "VenueID", "VenueName", booking.VenueID);
 
             return View(booking);
         }
